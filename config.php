@@ -1,7 +1,7 @@
 <?php
     define('DB_SERVER', 'localhost');
     define('DB_USERNAME', 'dev_user');
-    define('DB_PASSWORD', 'Benjamin4$');
+    define('DB_PASSWORD', 'Benjamsin4$');
     define('DB_NAME', 'task_db');
 
 
@@ -10,6 +10,6 @@
 
     //CHECK CONNECTION
     if($conn === false){
-        die("Error:". $mysqli_connect_error);
+        die("Error:". mysqli_connect_error());
     }
 ?>
