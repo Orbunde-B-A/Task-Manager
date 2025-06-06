@@ -7,7 +7,7 @@
 
         //Basic form validation
         if(empty($task_name)){
-            $message = "Task name cannot be empty";
+            $message = "Task name cannot be empty"; //bug dem here
             header("Location: index.php?message=". urlencode($message));
             exit();
         }
@@ -17,7 +17,7 @@
 
         if($stmt = mysqli_prepare($conn, $sql)){
             //bind parameters to prepared stmt
-            mysqli_stmt_bind_param($stmt, "ss", $param_task_name, $param_description);
+            mysqli_stmt_bind_param($stmt, "ss", $param_task_name, $param_description);// bug dem here "ss"
 
             //set parameter
             $param_task_name = $task_name;
@@ -33,12 +33,19 @@
                 header("Location: index.php?message=". urlencode($message));
                 exit();
             }
+
+            //close statement
+            mysqli_stmt_close($stmt);
+        }else{
+            $message = "Could not prepare statement". mysqli_error($conn);
+            header("Location: index.php?message=". urlencode($message));
+            exit();
         }
     };
     //SQL query to select all tasks
     $sql = "SELECT id, task_name, description, created_at FROM tasks ORDER BY created_at DESC";
     //store selected tasks in $results
-    $results = mysqli_query($conn, $sql);
+    $results = mysqli_query($conn, $sql);// bug dem here
     
 ?>
 <!DOCTYPE html>
@@ -92,28 +99,30 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-        </table>
+        <!-- </table> bug dem here-->
         <tbody>
             <?php
             if(mysqli_num_rows($results) > 0){
                 //fetch output from rows in db
-                while($row = mysqli_fetch_assoc($result)){
+                while($row = mysqli_fetch_assoc($results)){
                     echo "<tr>";
                     echo "<td>". htmlspecialchars($row["id"]). "</td>";
                     echo "<td>". htmlspecialchars($row["task_name"]). "</td>";
                     echo "<td>". htmlspecialchars($row["description"]). "</td>";
                     echo "<td>". $row["created_at"]. "</td>";
                     echo '<td class="action_links">';
-                    echo '<a href="edit.php?id='.$row["id"].'">Edit</a>';
-                    echo '<a href="delete.php?id='.$row["id"].'"onclick="return confirm(\'Are you sure you want to delete this task?\')">Delete</a>';
+                    echo '<a href="edit.php?id=' . $row["id"] . '">Edit</a>';
+                    //echo "<br>";
+                    echo '<a href="delete.php?id=' . $row["id"] . '" onclick="return confirm(\'Are you sure you want to delete this task?\')">Delete</a>';
                     echo '</td>';
                     echo "</tr>";
                 }
             }else{
-                echo "<tr><td colspan= 'o'>Task not found.</td></tr>";
+                echo "<tr><td colspan= '5'>Task not found.</td></tr>";
             }
             ?>
         </tbody>
+        </table>
 </body>
 </html>
 
