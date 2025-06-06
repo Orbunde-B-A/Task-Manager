@@ -1,5 +1,40 @@
 <?php
     include 'config.php'; //include the config file
+    //Handle form submission for adding task
+    if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_task'])){
+        $task_name = trim($_POST['task_name']);
+        $description = trim($_POST['description']);
+
+        //Basic form validation
+        if(empty($task_name)){
+            $message = "Task name cannot be empty";
+            header("Location: index.php?message=". urlencode($message));
+            exit();
+        }
+
+        //Prepare insert Statement
+        $sql ="INSERT INTO tasks (task_name, description) VALUES (?,?)";
+
+        if($stmt = mysqli_prepare($conn, $sql)){
+            //bind parameters to prepared stmt
+            mysqli_stmt_bind_param($stmt, "ss", $param_task_name, $param_description);
+
+            //set parameter
+            $param_task_name = $task_name;
+            $param_description = $description;
+
+            //Attempt to execute prepared statement
+            if(mysqli_stmt_execute($stmt)){
+                $message = "Task added successfully";
+                header("Location: index.php?message=". urlencode($message));
+                exit();
+            }else{
+                $message = "Task could not be added". mysqli_error($conn);
+                header("Location: index.php?message=". urlencode($message));
+                exit();
+            }
+        }
+    };
     //SQL query to select all tasks
     $sql = "SELECT id, task_name, description, created_at FROM tasks ORDER BY created_at DESC";
     //store selected tasks in $results
