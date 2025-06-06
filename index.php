@@ -62,8 +62,27 @@
             <?php
             if(mysqli_num_rows($results) > 0){
                 //fetch output from rows in db
+                while($row = mysqli_fetch_assoc($result)){
+                    echo "<tr>";
+                    echo "<td>". htmlspecialchars($row["id"]). "</td>";
+                    echo "<td>". htmlspecialchars($row["task_name"]). "</td>";
+                    echo "<td>". htmlspecialchars($row["description"]). "</td>";
+                    echo "<td>". $row["created_at"]. "</td>";
+                    echo '<td class="action_links">';
+                    echo '<a href="edit.php?id='.$row["id"].'">Edit</a>';
+                    echo '<a href="delete.php?id='.$row["id"].'"onclick="return confirm(\'Are you sure you want to delete this task?\')">Delete</a>';
+                    echo '</td>';
+                    echo "</tr>";
+                }
+            }else{
+                echo "<tr><td colspan= 'o'>Task not found.</td></tr>";
             }
             ?>
         </tbody>
+</body>
+</html>
 
-
+<?php 
+    //close connection
+    mysqli_close($conn);
+?>
