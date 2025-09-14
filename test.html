@@ -1,1 +1,118 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Party QR Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #1a202c;
+      font-family: 'Inter', sans-serif;
+      color: #e2e8f0;
+    }
+    #reader {
+      border-radius: 0.5rem;
+      background-color: #000;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4">
+
+  <div class="container max-w-md bg-gray-800 p-6 rounded-xl shadow-lg text-center w-full">
+    <h1 class="text-3xl font-bold mb-2">🎟️ Party QR Scanner</h1>
+    <p class="text-sm text-gray-400 mb-4">Scan attendee QR codes to verify access.</p>
+
+    <div id="reader" class="w-full h-72 border-2 border-gray-600 mb-4"></div>
+
+    <div id="result-box" class="bg-gray-700 p-4 rounded-lg text-center min-h-[80px] mb-4">
+      <p id="result-message" class="text-lg font-semibold text-gray-200">Click "Start Scanner"</p>
+      <p id="attendee-info" class="text-sm text-gray-400 mt-2"></p>
+    </div>
+
+    <button id="start-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Start Scanner</button>
+    <button id="stop-button" class="mt-2 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 hidden">Stop Scanner</button>
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const resultMessage = document.getElementById('result-message');
+      const attendeeInfo = document.getElementById('attendee-info');
+      const startButton = document.getElementById('start-button');
+      const stopButton = document.getElementById('stop-button');
+
+      const html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      let isScanning = false;
+
+      const onScanSuccess = (qrText) => {
+        stopScanner();
+        validateQR(qrText);
+      };
+
+      const validateQR = async (qrText) => {
+        resultMessage.textContent = '🔍 Validating QR...';
+        attendeeInfo.textContent = '';
+        try {
+          const res = await fetch('/api/verify_qr.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ qr: qrText.trim() })
+          });
+          const data = await res.json();
+
+          if (data.status === 'success') {
+            resultMessage.textContent = `✅ Access Granted`;
+            resultMessage.className = 'text-lg font-semibold text-green-400';
+            attendeeInfo.textContent = `Name: ${data.name}, Email: ${data.email}`;
+          } else {
+            resultMessage.textContent = `❌ ${data.message}`;
+            resultMessage.className = 'text-lg font-semibold text-red-400';
+            attendeeInfo.textContent = '';
+          }
+        } catch (err) {
+          console.error('Validation error:', err);
+          resultMessage.textContent = '⚠️ Could not validate QR';
+          resultMessage.className = 'text-lg font-semibold text-yellow-400';
+        }
+
+        setTimeout(() => {
+          if (!isScanning) startScanner();
+        }, 2500);
+      };
+
+      const startScanner = () => {
+        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+          .then(() => {
+            isScanning = true;
+            resultMessage.textContent = '📷 Scanning...';
+            resultMessage.className = 'text-lg font-semibold text-blue-400';
+            attendeeInfo.textContent = '';
+            startButton.classList.add('hidden');
+            stopButton.classList.remove('hidden');
+          })
+          .catch(err => {
+            console.error('Camera error:', err);
+            resultMessage.textContent = '⚠️ Could not access camera.';
+            resultMessage.className = 'text-lg font-semibold text-yellow-400';
+          });
+      };
+
+      const stopScanner = () => {
+        html5QrCode.stop()
+          .then(() => {
+            isScanning = false;
+            startButton.classList.remove('hidden');
+            stopButton.classList.add('hidden');
+          })
+          .catch(err => console.error('Failed to stop scanner:', err));
+      };
+
+      startButton.addEventListener('click', startScanner);
+      stopButton.addEventListener('click', stopScanner);
+    });
+  </script>
+</body>
+</html>
